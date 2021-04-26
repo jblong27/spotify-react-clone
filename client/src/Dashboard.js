@@ -4,6 +4,7 @@ import TrackSearchResult from './TrackSearchResult'
 import Player from './Player'
 import { Container, Form } from 'react-bootstrap'
 import SpotifyWebApi from 'spotify-web-api-node'
+import axios from 'axios'
 
 const spotifyApi = new SpotifyWebApi({
   clientId: "9d2bed93807448fe9f8b765614e48133",
@@ -14,11 +15,26 @@ export default function Dashboard({ code }) {
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [playingTrack, setPlayingTrack] = useState()
+  const [lyrics, setLyrics] = useState('')
 
   function chooseTrack(track) {
     setPlayingTrack(track)
     setSearch('')
+    setLyrics('')
   } 
+
+  useEffect(() => {
+    if (!playingTrack) return
+    //create an api called lyrics
+    axios.get('http://localhost:3001/lyrics', {
+      params: {
+        track: playingTrack.title,
+        artist: playingTrack.artist
+      }
+    }).then(res => {
+      setLyrics(res.data.lyrics)
+    })
+  }, [playingTrack])
 
   useEffect(() => {
     //if you don't have an access token, return. otherwise set it on the spotify api to use the token for further queries
@@ -66,6 +82,11 @@ export default function Dashboard({ code }) {
         {searchResults.map(track => (
           <TrackSearchResult track={track} key={track.uri} chooseTrack={chooseTrack} />
         ))}
+        {searchResults.length === 0 && (
+          <div className="text-center" style={{ whiteSpace: "pre" }}>
+           {lyrics}
+          </div>
+        )}
       </div>
       <div>
       <Player accessToken={accessToken} trackUri={playingTrack?.uri} />
