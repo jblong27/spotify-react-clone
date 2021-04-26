@@ -1,0 +1,2 @@
+# spotify-react-clone
+A Spotify clone built in React that also includes a lyric search for any song. This uses the Spotify Web API, react-spotify-web-playback for the player, and lyrics-finder API for the lyrics.

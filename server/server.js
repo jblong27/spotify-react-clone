@@ -1,18 +1,21 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
+const lyricsFinder = require('lyrics-finder')
 const SpotifyWebApi = require('spotify-web-api-node')
 
 const app = express()
 //to remove cors error
 app.use(cors())
 app.use(express.json())
+app.use(express.json({ extended: true }))
 
 app.post('/refresh', (req, res) => {
   const refreshToken = req.body.refreshToken
   const spotifyApi = new SpotifyWebApi({
-    redirectUri: 'http://localhost:3000',
-    clientId: '9d2bed93807448fe9f8b765614e48133',
-    clientSecret: 'fadaf2befb15499fab6173d4e2df0f7f',
+    redirectUri: process.env.REDIRECT_URI,
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
     refreshToken,
   })
 
@@ -46,6 +49,11 @@ app.post('/login', (req, res) => {
     console.log(err)
     res.sendStatus(400)
   })
+})
+
+app.get('/lyrics', async (req, res) => {
+  const lyrics = (await lyricsFinder(req.query.artist, req.query.track)) || "No Lyrics Found"
+  res.json({ lyrics })
 })
 
 app.listen(3001)
