@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import useAuth from './useAuth'
+import TrackSearchResult from './TrackSearchResult'
+import Player from './Player'
 import { Container, Form } from 'react-bootstrap'
 import SpotifyWebApi from 'spotify-web-api-node'
 
@@ -11,6 +13,12 @@ export default function Dashboard({ code }) {
   const accessToken = useAuth(code)
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
+  const [playingTrack, setPlayingTrack] = useState()
+
+  function chooseTrack(track) {
+    setPlayingTrack(track)
+    setSearch('')
+  } 
 
   useEffect(() => {
     //if you don't have an access token, return. otherwise set it on the spotify api to use the token for further queries
@@ -21,11 +29,15 @@ export default function Dashboard({ code }) {
   useEffect(() => {
     if (!search) return setSearchResults([])
     if (!accessToken) return
+
+    let cancel = false
     //search any tracks on spotify
     spotifyApi.searchTracks(search).then(res => {
-      res.body.tracks.items.map(track => {
+      if (cancel) return
+      setSearchResults(res.body.tracks.items.map(track => {
         const smallestAlbumImage = track.album.images.reduce(
           (smallest, image) => {
+            // loop through images, and get smallest image
             if(image.height < smallest.height) return image
             return smallest
           }, track.album.images[0])
@@ -34,10 +46,12 @@ export default function Dashboard({ code }) {
           artist: track.artists[0].name,
           title: track.name,
           uri: track.uri,
-          albumUrl: smallestAlbumImage
+          albumUrl: smallestAlbumImage.url
         }
-      })
+      }))
     })
+
+    return () => cancel = true
   }, [search, accessToken])
 
   return <Container className="d-flex flex-column py-2" style={{ 
@@ -49,9 +63,13 @@ export default function Dashboard({ code }) {
       onChange={e => setSearch(e.target.value)}
       />
       <div className="flex-grow-1 my-2" style={{ overflowY: "auto" }}>
-        Songs
+        {searchResults.map(track => (
+          <TrackSearchResult track={track} key={track.uri} chooseTrack={chooseTrack} />
+        ))}
       </div>
-      <div>Bottom</div>
+      <div>
+      <Player accessToken={accessToken} trackUri={playingTrack?.uri} />
+      </div>
   </Container>
 
 }
