@@ -10,6 +10,8 @@ app.use(cors())
 app.use(express.json())
 app.use(express.json({ extended: true }))
 
+var port = process.env.PORT || 3001
+
 app.post('/refresh', (req, res) => {
   const refreshToken = req.body.refreshToken
   const spotifyApi = new SpotifyWebApi({
@@ -56,4 +58,6 @@ app.get('/lyrics', async (req, res) => {
   res.json({ lyrics })
 })
 
-app.listen(3001)
+app.listen(port, function() {
+  console.log('App running on port 3001');
+})
